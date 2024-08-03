@@ -35,7 +35,11 @@ func start(c echo.Context) error {
 }
 
 func getStudents(c echo.Context) error {
-	return c.String(http.StatusOK, "List of all students")
+	students, err := db.GetStudents()
+	if err != nil {
+		return c.String(http.StatusNotFound, "Failed to get students")
+	}
+	return c.JSON(http.StatusOK, students)
 }
 
 func creatStudents(c echo.Context) error {
@@ -44,7 +48,10 @@ func creatStudents(c echo.Context) error {
 		return err
 	}
 
-	db.AddStudent(student)
+	if err := db.AddStudent(student); err != nil {
+		return c.String(http.StatusInternalServerError, "Error to creat Student")
+	}
+
 	return c.String(http.StatusOK, "Creat Student")
 }
 
