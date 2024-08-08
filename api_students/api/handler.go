@@ -1,11 +1,15 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
+	"strconv"
+
 	"github.com/kauancf/estudo/tree/main/api_students/db"
 	"github.com/labstack/echo"
+	"gorm.io/gorm"
 )
 
 // Handlerb
@@ -36,9 +40,25 @@ func (api *API) creatStudents(c echo.Context) error {
 }
 
 func (api *API) getStudent(c echo.Context) error {
-	id := c.Param("id")
-	getStudent := fmt.Sprintf("Get %s student", id)
-	return c.String(http.StatusOK, getStudent)
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to get student ID")
+	}
+
+	student, err := api.DB.GetStudent(id)
+	//não encontrar um studant com esse id (Status not found, 404)
+	// algum problema para encontrar um student
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return c.String(http.StatusNotFound, "Student not found")
+	}
+
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to get student")
+	}
+
+	return c.JSON(http.StatusOK, student)
 }
 
 func (api *API) updateStudent(c echo.Context) error {
