@@ -23,7 +23,21 @@ func (api *API) getStudents(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusNotFound, "Failed to get students")
 	}
-	return c.JSON(http.StatusOK, students)
+
+	active := c.QueryParam("active")
+
+	if active != "" {
+		act, err := strconv.ParseBool(active)
+		if err != nil {
+			log.Error().Err(err).Msgf("[api] error to parse boolean")
+			return c.String(http.StatusInternalServerError, "Failed to parse boolean")
+		}
+		students, err = api.DB.GetFilteredStudents(act)
+	}
+
+	listOfStudents := map[string][]schemas.StudentResponse{"students:": schemas.NewResponse(students)}
+
+	return c.JSON(http.StatusOK, listOfStudents)
 }
 
 func (api *API) creatStudents(c echo.Context) error {
@@ -50,7 +64,7 @@ func (api *API) creatStudents(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Error to creat Student")
 	}
 
-	return c.String(http.StatusOK, "Creat Student")
+	return c.JSON(http.StatusOK, student)
 }
 
 func (api *API) getStudent(c echo.Context) error {
